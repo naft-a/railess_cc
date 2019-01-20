@@ -59,7 +59,6 @@ module CC
     Request.new('/sizes?pid=uid7849-6112293-28')
   end
 
-
   def self.start
     Db::Database.start_with_new do
       not_to_copy = ["bridal", "maternity-clothes", "swimsuits", "teens"]
@@ -77,15 +76,19 @@ module CC
           all_sizes << Objects::Size.from_api(size)
         end
       end
+      
       all_sizes = all_sizes.uniq{|s| [s.external_id]}
-  
+      all_sizes.each do |size|
+        Db::Database.insert_size(size)
+      end
+      
       all_colors = []
       to_copy.each do |c|
         self.colors.for_category(c).fetch["colors"].each do |color|
           all_colors << Objects::Color.from_api(color)
         end
       end
-      all_colors = all_colors.uniq{ |c| [c.name] }
+      all_colors = all_colors.uniq{|c| [c.name] }
   
       products = []
       to_copy.each do |c|

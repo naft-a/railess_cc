@@ -87,49 +87,101 @@ module Db
     end
 
     def self.recreate
-      SQLite3::Database.open('test.db').execute("PRAGMA foreign_keys = OFF")
-      SQLite3::Database.open('test.db').execute("DROP TABLE products;")
-      SQLite3::Database.open('test.db').execute("DROP TABLE colors;")
-      SQLite3::Database.open('test.db').execute("DROP TABLE categories;")
-      SQLite3::Database.open('test.db').execute("DROP TABLE sizes;")
-      SQLite3::Database.open('test.db').execute("DROP TABLE product_colors;")
-      SQLite3::Database.open('test.db').execute("DROP TABLE product_categories;")
-      SQLite3::Database.open('test.db').execute("DROP TABLE product_sizes;")
+      self.with_open_db do |db|
+        db.execute("PRAGMA foreign_keys = OFF")
+        db.execute("DROP TABLE products;")
+        db.execute("DROP TABLE colors;")
+        db.execute("DROP TABLE categories;")
+        db.execute("DROP TABLE sizes;")
+        db.execute("DROP TABLE product_colors;")
+        db.execute("DROP TABLE product_categories;")
+        db.execute("DROP TABLE product_sizes;")
+      end
       self.create_new
     end
 
-    def self.insert_product(name, image)
-      SQLite3::Database.open('test.db').execute(
-        "INSERT INTO products (
-          external_id, branded_name, unbranded_name, currency,
-          price, price_label, click_url, description, image, discount
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-        [
-          external_id, branded_name, unbranded_name, currency, price, price_label,
-          click_url, description, image, discount
-        ]
-      )
+    def self.insert_product(product)
+      self.with_open_db do |db|
+        db.execute(
+          "INSERT INTO products (
+            external_id, branded_name, unbranded_name, currency,
+            price, price_label, click_url, description, image, discount
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+          [
+            product.external_id,
+            product.branded_name,
+            product.unbranded_name,
+            product.currency,
+            product.price,
+            product.price_label,
+            product.click_url,
+            product.description,
+            product.image,
+            product.discount
+          ]
+        )
+        db.last_insert_row_id
+      end
     end
 
-    def self.insert_size(external_id, name, canonical_size)
-      SQLite3::Database.open('test.db').execute(
-        "INSERT INTO sizes ( external_id, name, canonical_size )
-        VALUES (?, ?, ?);", [external_id, name, canonical_size]
-      )
+    def self.insert_color(color)
+      self.with_open_db do |db|
+        db.execute(
+          "INSERT INTO colors ( name, image )
+          VALUES (?, ?, ?);",
+          [
+            color.name,
+            color.image
+          ]
+        )
+        db.last_insert_row_id
+      end
     end
 
-    def self.insert_color(name, image)
-      SQLite3::Database.open('test.db').execute(
-        "INSERT INTO colors ( name, image )
-        VALUES (?, ?, ?);", [name, image]
-      )
+    def self.insert_category(category)
+      self.with_open_db do |db|
+        db.execute(
+          "INSERT INTO category ( identifier, name, full_name, short_name )
+          VALUES (?, ?, ?);",
+          [
+            category.identifier,
+            category.name,
+            category.full_name,
+            category.short_name
+          ]
+        )
+        db.last_insert_row_id
+      end
     end
 
-    def self.insert_category(identifier, name, full_name, short_name)
-      SQLite3::Database.open('test.db').execute(
-        "INSERT INTO category ( identifier, name, full_name, short_name )
-        VALUES (?, ?, ?);", [identifier, name, full_name, short_name]
-      )
+    def self.insert_size(size)
+      self.with_open_db do |db|
+        db.execute(
+          "INSERT INTO sizes ( external_id, name, canonical_size )
+          VALUES (?, ?, ?);",
+          [
+            size.external_id,
+            size.name,
+            size.canonical_size
+          ]
+        )
+        db.last_insert_row_id
+      end
+    end
+
+    def self.insert_product_color()
+      self.with_open_db do |db|
+        db.execute(
+          "INSERT INTO product_colors ( product_id, color_id ) VALUES 
+          ((), ) "
+        )
+        db.last_insert_row_id
+      end
+    end
+
+    def self.with_open_db
+      db = SQLite3::Database.open('test.db')
+      yield(db)
     end
 
     def self.start_with_new

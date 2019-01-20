@@ -3,7 +3,7 @@ module Objects
     def initialize(params = {})
       @external_id = params[:external_id]
       @name = params[:name]
-      @canonicalSize = params[:cannonical_size]
+      @canonical_size = params[:canonical_size]
     end
 
     attr_accessor *self.new.instance_variables.map {|s| s[1..-1]}
@@ -12,7 +12,7 @@ module Objects
       params = {
         external_id: size.nil? ? nil : size["id"],
         name: size.nil? ? nil : size["name"],
-        canonicalSize: 
+        canonical_size: 
           size.nil? ? nil :
             size["canonicalSize"].nil? ? nil : size["canonicalSize"]["name"],
       }
