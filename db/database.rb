@@ -128,7 +128,7 @@ module Db
       self.with_open_db do |db|
         db.execute(
           "INSERT INTO colors ( name, image )
-          VALUES (?, ?, ?);",
+          VALUES (?, ?);",
           [
             color.name,
             color.image
@@ -141,8 +141,8 @@ module Db
     def self.insert_category(category)
       self.with_open_db do |db|
         db.execute(
-          "INSERT INTO category ( identifier, name, full_name, short_name )
-          VALUES (?, ?, ?);",
+          "INSERT INTO categories ( identifier, name, full_name, short_name )
+          VALUES (?, ?, ?, ?);",
           [
             category.identifier,
             category.name,

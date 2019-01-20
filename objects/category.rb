@@ -1,7 +1,7 @@
 module Objects
   class Category
     def initialize(params = {})
-      @id = params[:id]
+      @identifier = params[:identifier]
       @name = params[:name]
       @short_name = params[:short_name]
       @full_name = params[:full_name]
@@ -12,7 +12,7 @@ module Objects
 
     def self.from_api(category)
       params = {
-        id: category["id"],
+        identifier: category["id"],
         name: category["id"],
         short_name: category["shortName"],
         full_name: category["fullName"],

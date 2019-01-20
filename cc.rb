@@ -62,25 +62,32 @@ module CC
   def self.start
     Db::Database.start_with_new do
       not_to_copy = ["bridal", "maternity-clothes", "swimsuits", "teens"]
-
       categories = self.women_categories.fetch["categories"]
-  
       to_copy = []
       categories.map do |category|
         to_copy << category["id"] unless not_to_copy.include?(category['id'])
       end
-  
+
+      to_copy.each do |category|
+        self.categories.for_category(category).fetch["categories"].each do |c|
+          Db::Database.insert_category(Objects::Category.from_api(c))
+        end
+      end
+
+      #------------------- Sizes ----------------------#
+
       all_sizes = []
       to_copy.each do |c|
         self.sizes.for_category(c).fetch["sizes"].each do |size|
           all_sizes << Objects::Size.from_api(size)
         end
       end
-      
       all_sizes = all_sizes.uniq{|s| [s.external_id]}
       all_sizes.each do |size|
         Db::Database.insert_size(size)
       end
+
+      #------------------- Colors ----------------------#
       
       all_colors = []
       to_copy.each do |c|
@@ -88,12 +95,20 @@ module CC
           all_colors << Objects::Color.from_api(color)
         end
       end
-      all_colors = all_colors.uniq{|c| [c.name] }
-  
+      all_colors = all_colors.uniq{|c| [c.name]}
+      all_colors.each do |color|
+        Db::Database.insert_color(color)
+      end
+
+      #------------------- Products ----------------------#
+
       products = []
       to_copy.each do |c|
         self.products.for_category(c).limit(1).fetch["products"].each do |product|
           products << Objects::Product.from_api(product) 
+          products.each do |prod|
+            Db::Database.insert_product(prod)
+          end
         end
       end
     end
