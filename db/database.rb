@@ -86,7 +86,7 @@ module Db
       SQL
     end
 
-    def self.recreate
+    def self.drop_all
       self.with_open_db do |db|
         db.execute("PRAGMA foreign_keys = OFF")
         db.execute("DROP TABLE products;")
@@ -97,6 +97,10 @@ module Db
         db.execute("DROP TABLE product_categories;")
         db.execute("DROP TABLE product_sizes;")
       end
+    end
+
+    def self.recreate
+      self.drop_all
       self.create_new
     end
 
