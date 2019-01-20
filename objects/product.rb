@@ -7,7 +7,7 @@ require_relative 'category.rb'
 module Objects
   class Product
     def initialize(params = {})
-      @id = params[:id]
+      @external_id = params[:external_id]
       @branded_name = params[:branded_name]
       @unbranded_name = params[:unbranded_name]
       @currency = params[:currency]
@@ -27,7 +27,7 @@ module Objects
 
     def self.from_api(product)
       params = {
-        id: product["id"],
+        external_id: product["id"],
         name: product["name"],
         branded_name: product["brandedName"],
         unbranded_name: product["unbrandedName"],

@@ -51,19 +51,47 @@ module CC
     Request.new('/categories?pid=uid7849-6112293-28').for_category('womens-clothes').depth(1)
   end
 
+  def self.colors
+    Request.new('/colors?pid=uid7849-6112293-28')
+  end
+
+  def self.sizes
+    Request.new('/sizes?pid=uid7849-6112293-28')
+  end
+
+
   def self.start
-    not_to_copy = ["bridal", "maternity-clothes", "swimsuits", "teens"]
-    categories = self.women_categories.fetch["categories"]
+    Db::Database.start_with_new do
+      not_to_copy = ["bridal", "maternity-clothes", "swimsuits", "teens"]
 
-    to_copy = []
-    categories.map do |category|
-      to_copy << category["id"] unless not_to_copy.include?(category['id'])
-    end
-
-    products = []
-    to_copy.each do |c|
-      self.products.for_category(c).limit(1).fetch["products"].each do |product|
-        products << Objects::Product.from_api(product) 
+      categories = self.women_categories.fetch["categories"]
+  
+      to_copy = []
+      categories.map do |category|
+        to_copy << category["id"] unless not_to_copy.include?(category['id'])
+      end
+  
+      all_sizes = []
+      to_copy.each do |c|
+        self.sizes.for_category(c).fetch["sizes"].each do |size|
+          all_sizes << Objects::Size.from_api(size)
+        end
+      end
+      all_sizes = all_sizes.uniq{|s| [s.external_id]}
+  
+      all_colors = []
+      to_copy.each do |c|
+        self.colors.for_category(c).fetch["colors"].each do |color|
+          all_colors << Objects::Color.from_api(color)
+        end
+      end
+      all_colors = all_colors.uniq{ |c| [c.name] }
+  
+      products = []
+      to_copy.each do |c|
+        self.products.for_category(c).limit(1).fetch["products"].each do |product|
+          products << Objects::Product.from_api(product) 
+        end
       end
     end
   end

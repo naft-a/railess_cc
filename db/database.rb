@@ -17,7 +17,7 @@ module Db
           price_label varchar(50),
           click_url text NOT NULL,
           description text NOT NULL,
-          image text NOT NULL,
+          image text,
           discount varchar(30)
         );
       SQL
@@ -26,23 +26,24 @@ module Db
         create table colors (
           color_id integer PRIMARY KEY,
           name VARCHAR(50),
-          image text NOT NULL
+          image text
         );
       SQL
 
       db.execute <<-SQL
         create table categories (
           category_id integer PRIMARY KEY,
-          identifier text NOT NULL,
-          name text NOT NULL,
-          full_name text NOT NULL,
-          short_name text NOT NULL
+          identifier text,
+          name text,
+          full_name text,
+          short_name text
         );
       SQL
 
       db.execute <<-SQL
         create table sizes (
           size_id integer PRIMARY KEY,
+          external_id integer,
           name VARCHAR(30),
           canonical_size VARCHAR(50)
         );
@@ -59,10 +60,81 @@ module Db
           ON DELETE CASCADE ON UPDATE NO ACTION
         );
       SQL
+
+      db.execute <<-SQL
+        create table product_categories (
+          product_id integer,
+          category_id integer,
+          PRIMARY KEY (product_id, category_id),
+          FOREIGN KEY (product_id) REFERENCES products (product_id)
+          ON DELETE CASCADE ON UPDATE NO ACTION,
+          FOREIGN KEY (category_id) REFERENCES categories (category_id)
+          ON DELETE CASCADE ON UPDATE NO ACTION
+        );
+      SQL
+
+      db.execute <<-SQL
+        create table product_sizes (
+          product_id integer,
+          size_id integer,
+          PRIMARY KEY (product_id, size_id),
+          FOREIGN KEY (product_id) REFERENCES products (product_id)
+          ON DELETE CASCADE ON UPDATE NO ACTION,
+          FOREIGN KEY (size_id) REFERENCES sizes (size_id)
+          ON DELETE CASCADE ON UPDATE NO ACTION
+        );
+      SQL
     end
 
-    def test_db
-      SQLite3::Database.open('test.db')
+    def self.recreate
+      SQLite3::Database.open('test.db').execute("PRAGMA foreign_keys = OFF")
+      SQLite3::Database.open('test.db').execute("DROP TABLE products;")
+      SQLite3::Database.open('test.db').execute("DROP TABLE colors;")
+      SQLite3::Database.open('test.db').execute("DROP TABLE categories;")
+      SQLite3::Database.open('test.db').execute("DROP TABLE sizes;")
+      SQLite3::Database.open('test.db').execute("DROP TABLE product_colors;")
+      SQLite3::Database.open('test.db').execute("DROP TABLE product_categories;")
+      SQLite3::Database.open('test.db').execute("DROP TABLE product_sizes;")
+      self.create_new
+    end
+
+    def self.insert_product(name, image)
+      SQLite3::Database.open('test.db').execute(
+        "INSERT INTO products (
+          external_id, branded_name, unbranded_name, currency,
+          price, price_label, click_url, description, image, discount
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        [
+          external_id, branded_name, unbranded_name, currency, price, price_label,
+          click_url, description, image, discount
+        ]
+      )
+    end
+
+    def self.insert_size(external_id, name, canonical_size)
+      SQLite3::Database.open('test.db').execute(
+        "INSERT INTO sizes ( external_id, name, canonical_size )
+        VALUES (?, ?, ?);", [external_id, name, canonical_size]
+      )
+    end
+
+    def self.insert_color(name, image)
+      SQLite3::Database.open('test.db').execute(
+        "INSERT INTO colors ( name, image )
+        VALUES (?, ?, ?);", [name, image]
+      )
+    end
+
+    def self.insert_category(identifier, name, full_name, short_name)
+      SQLite3::Database.open('test.db').execute(
+        "INSERT INTO category ( identifier, name, full_name, short_name )
+        VALUES (?, ?, ?);", [identifier, name, full_name, short_name]
+      )
+    end
+
+    def self.start_with_new
+      self.recreate
+      yield
     end
   end
 end

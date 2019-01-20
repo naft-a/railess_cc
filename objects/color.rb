@@ -9,8 +9,9 @@ module Objects
 
     def self.from_api(color)
       params = {
-        name: color["name"],
-        image: color["image"]["sizes"]["Best"]["url"],
+        name: color.nil? ? nil : color["name"],
+        image: color.nil? ? nil :
+          color["image"].nil? ? nil : color["image"]["sizes"]["Best"]["url"],
       }
 
       new(params)
