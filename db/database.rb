@@ -183,6 +183,29 @@ module Db
       end
     end
 
+    def self.insert_product_category(product_id, category_id)
+      self.with_open_db do |db|
+        db.execute(
+          "INSERT INTO product_categories ( product_id, category_id ) VALUES
+          (?, ?);",
+          [
+            product_id,
+            category_id
+          ]
+        )
+        db.last_insert_row_id
+      end
+    end
+
+    def self.get_category_id_by_identifier(identifier)
+      self.with_open_db do |db|
+        db.get_first_value(
+          "SELECT category_id FROM categories WHERE identifier = ?",
+          identifier
+        )
+      end
+    end
+
     def self.with_open_db
       db = SQLite3::Database.open('test.db')
       yield(db)

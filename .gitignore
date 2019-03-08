@@ -6,3 +6,4 @@
 
 # Ignore generate db
 test.db
+test.db-journal

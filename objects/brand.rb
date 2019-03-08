@@ -9,8 +9,8 @@ module Objects
 
     def self.from_api(brand)
       params = {
-        id: brand["id"],
-        name: brand["name"],
+        id: brand.nil? ? nil : brand["id"],
+        name: brand.nil? ? nil : brand["name"],
       }
 
       new(params)
