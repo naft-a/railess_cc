@@ -6,4 +6,5 @@
 
 # Ignore generate db
 test.db
+test_copy.db
 test.db-journal

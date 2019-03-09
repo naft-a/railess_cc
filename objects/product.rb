@@ -8,6 +8,7 @@ module Objects
   class Product
     def initialize(params = {})
       @external_id = params[:external_id]
+      @brand = params[:brand]
       @branded_name = params[:branded_name]
       @unbranded_name = params[:unbranded_name]
       @currency = params[:currency]

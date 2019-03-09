@@ -4,7 +4,7 @@ require 'yaml'
 require 'httparty'
 
 require_relative 'objects/product.rb'
-require_relative 'copier/worker.rb'
+require_relative 'core/worker.rb'
 require_relative 'db/database.rb'
 
 module CC
@@ -41,34 +41,34 @@ module CC
   end
 
   def self.products
-    Request.new('/products?pid=uid7849-6112293-28')
+    Request.new('/products?pid=TEST')
   end
 
   def self.categories
-    Request.new('/categories?pid=uid7849-6112293-28')
+    Request.new('/categories?pid=TEST')
   end
 
   def self.women_categories
-    Request.new('/categories?pid=uid7849-6112293-28').for_category('womens-clothes').depth(1)
+    Request.new('/categories?pid=TEST').for_category('womens-clothes').depth(1)
   end
 
   def self.men_categories
-    Request.new('/categories?pid=uid7849-6112293-28').for_category('mens-clothes').depth(1)
+    Request.new('/categories?pid=TEST').for_category('mens-clothes').depth(1)
   end
 
   def self.colors
-    Request.new('/colors?pid=uid7849-6112293-28')
+    Request.new('/colors?pid=TEST')
   end
 
   def self.sizes
-    Request.new('/sizes?pid=uid7849-6112293-28')
+    Request.new('/sizes?pid=TEST')
   end
 
   def self.start
     Db::Database.start_with_new do
       puts "--- start ---"
-      Copier::Worker.work!('women')
-      Copier::Worker.work!('men')
+      Core::Worker.work!(:women)
+      Core::Worker.work!(:men)
       puts "--- finish ---"
     end
   end

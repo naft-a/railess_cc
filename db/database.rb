@@ -10,6 +10,8 @@ module Db
         create table products (
           product_id integer PRIMARY KEY,
           external_id varchar(30),
+          color_id varchar(30),
+          brand text,
           branded_name text NOT NULL,
           unbranded_name text NOT NULL,
           currency varchar(50),
@@ -25,8 +27,7 @@ module Db
       db.execute <<-SQL
         create table colors (
           color_id integer PRIMARY KEY,
-          name VARCHAR(50),
-          image text
+          name VARCHAR(50)
         );
       SQL
 
@@ -34,6 +35,7 @@ module Db
         create table categories (
           category_id integer PRIMARY KEY,
           identifier text,
+          sex text,
           name text,
           full_name text,
           short_name text
@@ -44,20 +46,7 @@ module Db
         create table sizes (
           size_id integer PRIMARY KEY,
           external_id integer,
-          name VARCHAR(30),
-          canonical_size VARCHAR(50)
-        );
-      SQL
-
-      db.execute <<-SQL
-        create table product_colors (
-          product_id integer,
-          color_id integer,
-          PRIMARY KEY (product_id, color_id),
-          FOREIGN KEY (product_id) REFERENCES products (product_id)
-          ON DELETE CASCADE ON UPDATE NO ACTION,
-          FOREIGN KEY (color_id) REFERENCES colors (color_id)
-          ON DELETE CASCADE ON UPDATE NO ACTION
+          name VARCHAR(30)
         );
       SQL
 
@@ -93,7 +82,6 @@ module Db
         db.execute("DROP TABLE colors;")
         db.execute("DROP TABLE categories;")
         db.execute("DROP TABLE sizes;")
-        db.execute("DROP TABLE product_colors;")
         db.execute("DROP TABLE product_categories;")
         db.execute("DROP TABLE product_sizes;")
       end
@@ -104,15 +92,17 @@ module Db
       self.create_new
     end
 
-    def self.insert_product(product)
+    def self.insert_product(product, color_id)
       self.with_open_db do |db|
         db.execute(
           "INSERT INTO products (
-            external_id, branded_name, unbranded_name, currency,
+            external_id, color_id, brand, branded_name, unbranded_name, currency,
             price, price_label, click_url, description, image, discount
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
           [
             product.external_id,
+            color_id,
+            product.brand.name,
             product.branded_name,
             product.unbranded_name,
             product.currency,
@@ -131,25 +121,25 @@ module Db
     def self.insert_color(color)
       self.with_open_db do |db|
         db.execute(
-          "INSERT INTO colors ( name, image )
-          VALUES (?, ?);",
+          "INSERT INTO colors ( name )
+          VALUES (?);",
           [
-            color.name,
-            color.image
+            color.name
           ]
         )
         db.last_insert_row_id
       end
     end
 
-    def self.insert_category(category)
+    def self.insert_category(category, sex)
       self.with_open_db do |db|
         db.execute(
-          "INSERT INTO categories ( identifier, name, full_name, short_name )
-          VALUES (?, ?, ?, ?);",
+          "INSERT INTO categories ( identifier, name, sex, full_name, short_name )
+          VALUES (?, ?, ?, ?, ?);",
           [
             category.identifier,
             category.name,
+            sex,
             category.full_name,
             category.short_name
           ]
@@ -161,23 +151,12 @@ module Db
     def self.insert_size(size)
       self.with_open_db do |db|
         db.execute(
-          "INSERT INTO sizes ( external_id, name, canonical_size )
-          VALUES (?, ?, ?);",
+          "INSERT INTO sizes ( external_id, name )
+          VALUES (?, ?);",
           [
             size.external_id,
-            size.name,
-            size.canonical_size
+            size.name
           ]
-        )
-        db.last_insert_row_id
-      end
-    end
-
-    def self.insert_product_color()
-      self.with_open_db do |db|
-        db.execute(
-          "INSERT INTO product_colors ( product_id, color_id ) VALUES 
-          ((), ) "
         )
         db.last_insert_row_id
       end
@@ -197,6 +176,20 @@ module Db
       end
     end
 
+    def self.insert_product_size(product_id, size_id)
+      self.with_open_db do |db|
+        db.execute(
+          "INSERT INTO product_sizes ( product_id, size_id ) VALUES
+          (?, ?);",
+          [
+            product_id,
+            size_id
+          ]
+        )
+        db.last_insert_row_id
+      end
+    end
+
     def self.get_category_id_by_identifier(identifier)
       self.with_open_db do |db|
         db.get_first_value(
@@ -206,9 +199,35 @@ module Db
       end
     end
 
+    def self.get_color_id_by_name(name)
+      self.with_open_db do |db|
+        db.get_first_value(
+          "SELECT color_id FROM colors WHERE name = ?",
+          name
+        )
+      end
+    end
+
+    def self.get_size_id_by_name(name)
+      self.with_open_db do |db|
+        db.get_first_value(
+          "SELECT size_id FROM sizes WHERE name = ?",
+          name
+        )
+      end
+    end
+
     def self.with_open_db
       db = SQLite3::Database.open('test.db')
-      yield(db)
+      if block_given?
+        yield(db)
+      else
+        db
+      end
+    end
+
+    def self.open?
+      !self.with_open_db.closed?
     end
 
     def self.start_with_new
